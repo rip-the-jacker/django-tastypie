@@ -8,7 +8,7 @@ import uuid
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.exceptions import ImproperlyConfigured
-from django.middleware.csrf import _sanitize_token, constant_time_compare
+from django.middleware.csrf import _sanitize_token, _compare_salted_tokens
 from django.utils.six.moves.urllib.parse import urlparse
 from django.utils.translation import ugettext as _
 
@@ -316,9 +316,9 @@ class SessionAuthentication(Authentication):
             if not same_origin(referer, good_referer):
                 return False
 
-        request_csrf_token = request.META.get('HTTP_X_CSRFTOKEN', '')
+        request_csrf_token = _sanitize_token(request.META.get('HTTP_X_CSRFTOKEN', ''))
 
-        if not constant_time_compare(request_csrf_token, csrf_token):
+        if not _compare_salted_tokens(request_csrf_token, csrf_token):
             return False
 
         return request.user.is_authenticated()
